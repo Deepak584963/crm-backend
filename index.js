@@ -1,12 +1,19 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const app = express();
+const cors = require('cors');
 const bodyParser = require('body-parser')
 const PORT = require("./config/server.config");
 const { mongoDbUri } = require("./config/db.config");
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const ticketRoutes = require('./routes/ticket.routes');
+
+app.use(cors({
+    origin: 'http://localhost:5173',  // Replace with your actual frontend URL in production
+    credentials: true,  // If your frontend requires credentials (cookies, HTTP authentication, etc.)
+  }));
+  
 app.use(function (req, res, next) {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Credentials", "true");
