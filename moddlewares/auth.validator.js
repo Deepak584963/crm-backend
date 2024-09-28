@@ -1,91 +1,94 @@
 const authService = require("../services/auth.service");
 const userService = require("../services/user.service");
 
-const isUserAuthenticated = async (req, res, next) =>{
+const isUserAuthenticated = async (req, res, next) => {
     const token = req.headers['x-access-token'];
-    //if token is not provided
-    // no need to verify the token, but just return the error message
-    if(!token){
-        res.status(401).send({
-            message: "jwt token is not provided"
-        })
+
+    // If no token is provided, return an error and stop further execution
+    if (!token) {
+        return res.status(401).send({
+            message: "JWT token is not provided"
+        });
     }
 
-    //if token is provided
+    // Verify the provided token
     const isVerifiedToken = authService.verfiyJwtToken(token);
-    //token is invalid
-    if(!isVerifiedToken || isVerifiedToken === "invalid signature"){
+
+    // If the token is invalid, return an error
+    if (!isVerifiedToken || isVerifiedToken === "invalid signature") {
         return res.status(401).send({
-            message: "jwt token is invalid"
-        })
+            message: "JWT token is invalid"
+        });
     }
-     //token is valid
-     try{
-        const userInfo = await userService.getUserByEmail({email:isVerifiedToken.email});
-        if(!userInfo){
+
+    // If token is valid, try to get user info
+    try {
+        const userInfo = await userService.getUserByEmail({ email: isVerifiedToken.email });
+        if (!userInfo) {
             return res.status(401).send({
-                message: "email is invalid"
-            })
+                message: "Email is invalid"
+            });
         }
+
+        // Attach user info to the request object
         req.user = userInfo;
-        next();
-    }
-     catch(err){
+        next();  // Proceed to the next middleware
+    } catch (err) {
         return res.status(401).send({
-            message: "userdata is invalid"
-        })
-     }
-    
-}
+            message: "User data is invalid"
+        });
+    }
+};
 
-const isAdmin = (req, res, next) =>{
-    if(!req.user){
+const isAdmin = (req, res, next) => {
+    if (!req.user) {
         return res.status(401).send({
-            message: "user is invalid"
-        })
-    }
-    console.log("==================", req.user);
-    if(req.user.userType !== "admin"){
-        return res.status(401).send({
-            message: "user doesn't have required permissions"
-        })
+            message: "User is invalid"
+        });
     }
 
-    //user is admin
+    if (req.user.userType !== "admin") {
+        return res.status(401).send({
+            message: "User doesn't have required permissions"
+        });
+    }
+
+    // User is admin
     next();
-}
+};
 
-const isAdminOrUserSelf = (req, res, next) =>{
-    if(!req.user){
+const isAdminOrUserSelf = (req, res, next) => {
+    if (!req.user) {
         return res.status(401).send({
-            message: "user is invalid"
-        })
-    }
-    if(req.user.userType !== "admin" && !req.user._id.equals(req.body.updates._id)){        
-        return res.status(401).send({
-            message: "user doesn't have required permissions"
-        })
+            message: "User is invalid"
+        });
     }
 
-    //user is either admin or has self updates
+    if (req.user.userType !== "admin" && !req.user._id.equals(req.body.updates._id)) {
+        return res.status(401).send({
+            message: "User doesn't have required permissions"
+        });
+    }
+
+    // User is either admin or it's their own data
     next();
-}
+};
 
-const isAdminOrEngineer = (req, res, next) =>{
-    if(!req.user){
+const isAdminOrEngineer = (req, res, next) => {
+    if (!req.user) {
         return res.status(401).send({
-            message: "user is invalid"
-        })
-    }
-    console.log("==================", req.user);
-    if(req.user.userType !== "admin" &&  req.user.userType !== "engineer"){
-        return res.status(401).send({
-            message: "user doesn't have required permissions"
-        })
+            message: "User is invalid"
+        });
     }
 
-    //user is admin or engineer
+    if (req.user.userType !== "admin" && req.user.userType !== "engineer") {
+        return res.status(401).send({
+            message: "User doesn't have required permissions"
+        });
+    }
+
+    // User is either admin or engineer
     next();
-}
+};
 
-module.exports = {isUserAuthenticated, isAdmin, isAdminOrEngineer, isAdminOrUserSelf};
+module.exports = { isUserAuthenticated, isAdmin, isAdminOrEngineer, isAdminOrUserSelf };
